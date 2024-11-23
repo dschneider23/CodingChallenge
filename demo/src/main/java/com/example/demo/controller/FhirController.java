@@ -29,6 +29,7 @@ public class FhirController {
     // Erzeugt ein FhirContext-Objekt für FHIR R4
     private final FhirContext fhirContext = FhirContext.forR4();
 
+    //nicht FHIR konform, bitte zu /Patient umbenennen (siehe https://hl7.org/fhir/R4/patient.html)
     @PostMapping("/Person") // Mapped HTTP POST-Anfragen auf diesen Endpunkt
     public ResponseEntity<String> createPatient(@RequestBody String patientResource) {
         try {
@@ -37,9 +38,13 @@ public class FhirController {
 
             // Erzeugt einen JSON-Parser für FHIR
             IParser parser = fhirContext.newJsonParser();
+
+            //Bitte parsen der Patient-Ressource in eigene Klasse auslagern
+
             // Parsen des Patient-Ressource-Strings in ein Patient-Objekt
             Patient patient = parser.parseResource(Patient.class, patientResource);
 
+            //Bitte Validierung von patient ergänzen
             // Extrahieren des Vornamens aus der Patient-Ressource
             String firstName = patient.getName().get(0).getGiven().stream()
                                   .map(namePart -> namePart.getValue())
@@ -55,6 +60,8 @@ public class FhirController {
             // Loggt die extrahierten und konvertierten Patientendaten
             logger.info("Parsed patient data: " + firstName + " " + lastName + ", Birthdate: " + birthDate);
 
+            //Behandlung von id und meta fehlen (siehe https://www.hl7.org/fhir/R4/http.html#create)
+
             // Sendet die Patientendaten an die proprietäre API
             boolean apiSuccess = proprietaryApiService.sendPatientData(firstName, lastName, birthDate);
 
@@ -65,6 +72,7 @@ public class FhirController {
             }  else {
                 // Loggt und gibt eine Fehlerantwort zurück, wenn die API-Anfrage fehlschlägt
                 logger.severe("Failed to send patient data to proprietary API.");
+                // Bitte Fehler gemäß FHIR Spezifikation zurückgeben (siehe https://www.hl7.org/fhir/R4/http.html#create)
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Internal Server Error.");
             }   
     } catch (Exception e) {
@@ -75,6 +83,7 @@ public class FhirController {
 }
 
     private String convertDate(String birthDate) {
+        //Bitte robuste Konvertierung benutzen, z.B. SimpleDateFormat und Fehlerfälle behandeln
         // Konvertierung des Geburtsdatums von YYYY-MM-DD zu DD.MM.YYYY
         String[] parts = birthDate.split("-");
         return parts[2] + "." + parts[1] + "." + parts[0];

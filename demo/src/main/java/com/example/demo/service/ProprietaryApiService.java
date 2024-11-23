@@ -27,8 +27,14 @@ public class ProprietaryApiService {
 
     public boolean sendPatientData(String firstName, String lastName, String birthDate) {
         try {
+            //Validierung der Eingabeparameter gegen Person-JSON-Scheme fehlt
+            //Validierung des birthdate Formats fehlt
+
+            //Base-URL konfigurierbar machen
              // URL der proprietären API
             String url = "http://localhost:3001/fhir/Person";
+
+            //Bitte ändern in robustere und verständlichere Generierung des requestBody
             // Erstellen des Anfragekörpers mit den Patientendaten
             String requestBody = String.format("{\"firstName\":\"%s\",\"lastName\":\"%s\",\"birthDate\":\"%s\"}",
                                                 firstName, lastName, birthDate);
@@ -44,6 +50,7 @@ public class ProprietaryApiService {
             logger.info("Response from proprietary API: " + response.getStatusCode());
             HttpStatus statusCode = response.getStatusCode();
 
+            //Lediglich Created ist als valider Erfolgsfall akzeptiert
             // Akzeptiere sowohl 200 (OK) als auch 201 (Created) als erfolgreichen Status
             if (statusCode == HttpStatus.OK || statusCode == HttpStatus.CREATED) {
                 return true;
