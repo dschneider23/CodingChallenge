@@ -1,5 +1,6 @@
 package com.example.demo.controller;
 
+import com.example.demo.util.PatientDataExtractor;
 import org.hl7.fhir.r4.model.Patient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -29,8 +30,8 @@ public class FhirController {
     // Erzeugt ein FhirContext-Objekt für FHIR R4
     private final FhirContext fhirContext = FhirContext.forR4();
 
-    //nicht FHIR konform, bitte zu /Patient umbenennen (siehe https://hl7.org/fhir/R4/patient.html)
-    @PostMapping("/Person") // Mapped HTTP POST-Anfragen auf diesen Endpunkt
+    //FHIR compliant endpoint
+    @PostMapping("/Patient") // Mapped HTTP POST-Anfragen auf diesen Endpunkt
     public ResponseEntity<String> createPatient(@RequestBody String patientResource) {
         try {
             // Loggt die erhaltene Anfrage
@@ -39,26 +40,22 @@ public class FhirController {
             // Erzeugt einen JSON-Parser für FHIR
             IParser parser = fhirContext.newJsonParser();
 
-            //Bitte parsen der Patient-Ressource in eigene Klasse auslagern
-
             // Parsen des Patient-Ressource-Strings in ein Patient-Objekt
             Patient patient = parser.parseResource(Patient.class, patientResource);
 
-            //Bitte Validierung von patient ergänzen
-            // Extrahieren des Vornamens aus der Patient-Ressource
-            String firstName = patient.getName().get(0).getGiven().stream()
-                                  .map(namePart -> namePart.getValue())
-                                  .collect(Collectors.joining(" "));
-            // Extrahieren des Nachnamens aus der Patient-Ressource
-            String lastName = patient.getName().get(0).getFamily();
-            // Extrahieren des Geburtsdatums aus der Patient-Ressource
-            String birthDate = patient.getBirthDateElement().getValueAsString();
+            // Validate patient resource using PatientDataExtractor
+            PatientDataExtractor patientDataExtractor = new PatientDataExtractor();
+            if (!patientDataExtractor.validatePatient(patient)) {
+                return ResponseEntity.badRequest().body("Invalid FHIR Patient resource");
+            }
 
-            // Konvertierung des Geburtsdatums in das gewünschte Format
-            birthDate = convertDate(birthDate);
+            // Extract patient details
+            String firstName = patientDataExtractor.extractFirstName(patient);
+            String lastName = patientDataExtractor.extractLastName(patient);
+            String birthDate = patientDataExtractor.extractBirthDate(patient);
 
             // Loggt die extrahierten und konvertierten Patientendaten
-            logger.info("Parsed patient data: " + firstName + " " + lastName + ", Birthdate: " + birthDate);
+            logger.info("Extracted patient data: " + firstName + " " + lastName + ", Birthdate: " + birthDate);
 
             //Behandlung von id und meta fehlen (siehe https://www.hl7.org/fhir/R4/http.html#create)
 
@@ -81,11 +78,4 @@ public class FhirController {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Internal Server Error.");
     }
 }
-
-    private String convertDate(String birthDate) {
-        //Bitte robuste Konvertierung benutzen, z.B. SimpleDateFormat und Fehlerfälle behandeln
-        // Konvertierung des Geburtsdatums von YYYY-MM-DD zu DD.MM.YYYY
-        String[] parts = birthDate.split("-");
-        return parts[2] + "." + parts[1] + "." + parts[0];
-    }
 }

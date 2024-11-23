@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Schema for Persons",
+  "type": "object",
+  "properties": {
+    "PersonFirstName": {
+      "type": "string"
+    },
+    "PersonLastName": {
+      "type": "string"
+    },
+    "PersonDOB": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "PersonFirstName",
+    "PersonLastName",
+    "PersonDOB"
+  ]
+}
