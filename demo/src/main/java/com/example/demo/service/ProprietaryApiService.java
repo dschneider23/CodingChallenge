@@ -31,7 +31,7 @@ public class ProprietaryApiService {
     // Erzeugt ein RestTemplate-Objekt für HTTP-Anfragen
     private final RestTemplate restTemplate = new RestTemplate();
 
-    // Base URL for the proprietary API, read from application properties for flexibility
+    // Base URL for proprietary API, read from application properties
     @Value("${proprietary.api.base-url:http://localhost:3001}")
     private String baseUrl;
 
